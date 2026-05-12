@@ -1,0 +1,24 @@
+# Python/runtime noise
+__pycache__/
+*.py[cod]
+
+# Local QR Desk data
+app_data/qr_app.db
+app_data/uploads/
+app_data/scans/
+app_data/debug_frames/
+app_data/engine_*/
+app_data/*server*.log
+app_data/codex_*.py
+app_data/codex_*.log
+
+# Build outputs
+build/
+dist/
+installer_payload/
+
+# Local editor settings
+.vscode/
+
+stable_checkpoints/
+qrdesk_server*.log

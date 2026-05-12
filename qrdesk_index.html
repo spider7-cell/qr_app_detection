@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QR Detector Desk</title>
+    <link rel="stylesheet" href="/assets/app.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="app-frame">
+        <aside class="sidebar">
+          <div class="sidebar-brand">
+            <p class="eyebrow">QR Workspace</p>
+            <h1>QR Desk</h1>
+            <p class="sidebar-copy">Scan images, inspect results, and export saved files.</p>
+          </div>
+
+          <section class="sidebar-card quick-info" aria-label="Quick help">
+            <h3>Steps</h3>
+            <ol class="flow-list">
+              <li>Choose images</li>
+              <li>Run the scan</li>
+              <li>Open the result you need</li>
+            </ol>
+          </section>
+
+          <section class="sidebar-card control-panel" id="controls">
+            <div class="panel-head">
+              <h2>Scan Setup</h2>
+              <p>Use one optimized production scan.</p>
+            </div>
+
+            <input id="profile" type="hidden" value="fast">
+            <div class="fixed-mode-card" aria-label="Production scan mode">
+              <span>Production mode</span>
+              <strong>Fast optimized</strong>
+              <small>Best current speed/result trade-off for this QR engine.</small>
+            </div>
+
+            <details class="advanced-options">
+              <summary>Advanced</summary>
+              <div class="advanced-grid">
+                <label>
+                  <span>Deep Timeout</span>
+                  <input id="deep-timeout" type="number" min="0" step="30" value="300">
+                </label>
+
+                <label>
+                  <span>Workers</span>
+                  <select id="workers">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                </label>
+              </div>
+            </details>
+
+
+            <input id="file-input" class="hidden-file-input" type="file" multiple accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp">
+
+            <div id="status-banner" class="status-banner idle">Ready.</div>
+          </section>
+        </aside>
+
+        <main class="workspace">
+          <header class="app-toolbar">
+            <div class="toolbar-main">
+              <div class="window-dots" aria-hidden="true">
+                <span class="window-dot red"></span>
+                <span class="window-dot yellow"></span>
+                <span class="window-dot green"></span>
+              </div>
+              <div class="toolbar-copy">
+                <p class="eyebrow">Desktop Scanner</p>
+                <h2>QR Scan Desk</h2>
+              </div>
+            </div>
+            <div class="toolbar-pills">
+              <div class="toolbar-pill">
+                <span>Mode</span>
+                <strong id="toolbar-profile">fast</strong>
+              </div>
+              <div class="toolbar-pill">
+                <span>User</span>
+                <strong id="toolbar-user">admin</strong>
+              </div>
+              <button id="security-btn" class="toolbar-logout toolbar-security" type="button">Security</button>
+              <button id="open-export-folder-btn" class="toolbar-logout toolbar-export" type="button">Open Exports</button>
+              <button id="about-btn" class="toolbar-logout toolbar-about" type="button">About</button>
+              <button id="logout-btn" class="toolbar-logout" type="button">Logout</button>
+              <button id="quit-app-btn" class="toolbar-logout toolbar-quit" type="button">Quit App</button>
+            </div>
+          </header>
+
+          <section class="stage-shell" id="inspector">
+            <div class="workbench">
+              <section class="panel detail-panel">
+                <div class="panel-head">
+                  <h2>Result</h2>
+                  <p>Open a scan, inspect one image, and export what you need.</p>
+                </div>
+
+                <div id="detail-header" class="detail-header hidden">
+                  <div>
+                    <p id="detail-scan-label" class="detail-scan-label">No scan selected</p>
+                    <p id="detail-scan-meta" class="detail-scan-meta">Choose a scan from the right panel.</p>
+                  </div>
+                  <div id="detail-scan-badge" class="detail-scan-badge">Idle</div>
+                </div>
+
+                <div id="detail-loading" class="detail-loading hidden">
+                  <div class="detail-loading-card">
+                    <div class="loading-pulse"></div>
+                    <h3 id="detail-loading-title">Loading scan...</h3>
+                    <p id="detail-loading-copy">Preparing the current workspace.</p>
+                  </div>
+                </div>
+
+                <div id="detail-empty" class="detail-empty">
+                  <div id="drop-zone" class="empty-stage source-upload-mode">
+                    <div class="input-source-switch" aria-label="Choose image source">
+                      <button id="source-upload-btn" class="source-option active" type="button">
+                        <span>Upload from PC</span>
+                        <small>Select an existing board image.</small>
+                      </button>
+                      <button id="source-camera-btn" class="source-option" type="button">
+                        <span>External camera</span>
+                        <small>Use a USB camera connected to this PC.</small>
+                      </button>
+                    </div>
+                    <div class="empty-preview">
+                      <video id="camera-preview" class="camera-preview hidden" autoplay playsinline muted></video>
+                      <img id="pre-scan-preview" class="preview-image hidden" alt="Selected image preview">
+                      <button id="clear-preview-btn" class="preview-clear hidden" type="button" aria-label="Cancel selected image">X</button>
+                      <canvas id="camera-canvas" class="hidden"></canvas>
+                    </div>
+                    <section class="camera-panel camera-center-panel hidden" aria-label="External camera capture">
+                      <div class="camera-panel-head">
+                        <span class="camera-kicker">Cable connected camera</span>
+                        <h3>External USB Camera</h3>
+                        <p>Connect the camera, start live preview, capture the board, then scan it.</p>
+                      </div>
+                      <label>
+                        <span>Camera source</span>
+                        <select id="camera-device">
+                          <option value="">Connected camera</option>
+                        </select>
+                      </label>
+                      <div class="camera-button-grid">
+                        <button id="start-camera-btn" class="mini-action camera-action" type="button">Start live</button>
+                        <button id="stop-camera-btn" class="mini-action camera-action" type="button">Stop</button>
+                        <button id="capture-camera-btn" class="mini-action camera-action" type="button">Capture photo</button>
+                        <button id="scan-camera-btn" class="mini-action camera-action primary" type="button">Scan capture</button>
+                      </div>
+                      <div id="camera-status" class="camera-status">Connect the camera cable, then start live preview.</div>
+                    </section>
+                    <div class="empty-copy">
+                      <p id="pre-scan-copy">Choose Upload from PC or External camera to start.</p>
+                      <small id="drop-copy">Open any saved scan from the right panel.</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="detail-content" class="detail-content hidden">
+                  <div class="detail-main">
+                    <div id="image-strip" class="image-strip"></div>
+                    <div class="image-results" id="image-results"></div>
+                  </div>
+                  <div class="scan-summary" id="scan-summary"></div>
+                </div>
+
+                <div id="history-page" class="history-page hidden">
+                  <div class="history-page-head">
+                    <div>
+                      <span class="section-kicker">History</span>
+                      <h2>Saved Runs</h2>
+                      <p>Open previous scans, inspect results, or export saved tables.</p>
+                    </div>
+                    <div class="history-page-actions">
+                      <button id="history-back-btn" class="mini-action" type="button">Back to workspace</button>
+                    </div>
+                  </div>
+                  <div class="history-tools" aria-label="History filters">
+                    <label>
+                      <span>Search</span>
+                      <input id="history-search" type="search" placeholder="Scan name or image name">
+                    </label>
+                    <label>
+                      <span>Status</span>
+                      <select id="history-status-filter">
+                        <option value="all">All scans</option>
+                        <option value="completed">Completed</option>
+                        <option value="running">Running</option>
+                        <option value="queued">Queued</option>
+                        <option value="failed">Failed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </label>
+                    <button id="history-clear-filters" class="mini-action" type="button">Clear</button>
+                  </div>
+                  <div id="history-page-list" class="history-page-list"></div>
+                </div>
+              </section>
+
+              <section class="panel history-panel" id="history">
+                <div class="panel-head history-panel-head">
+                  <div>
+                    <h2>Recent Runs</h2>
+                    <p>Latest saved scans</p>
+                  </div>
+                  <button id="open-history-btn" class="history-open-btn" type="button">History</button>
+                </div>
+                <div id="scan-list-meta" class="scan-list-meta">Loading scans...</div>
+                <div id="scan-list" class="scan-list"></div>
+              </section>
+            </div>
+
+            <div class="action-dock">
+              <button id="open-files-btn" class="btn btn-accent">Upload</button>
+              <button id="run-upload-btn" class="btn btn-primary">Scan</button>
+              <button id="run-sample-btn" class="btn btn-secondary">Reference Set</button>
+              <div id="selection-hint" class="selection-hint">No image selected yet.</div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+
+
+
+    <div id="admin-modal" class="admin-modal hidden" aria-hidden="true">
+      <div class="admin-modal-backdrop" data-close-admin="true"></div>
+      <div class="admin-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title">
+        <div class="admin-modal-head">
+          <div>
+            <span class="eyebrow modal-eyebrow">Admin Security</span>
+            <strong id="admin-modal-title">Change Password</strong>
+          </div>
+          <button id="admin-modal-close" class="image-modal-close" type="button" aria-label="Close security settings">Close</button>
+        </div>
+        <form id="password-form" class="password-form">
+          <label>
+            <span>Current password</span>
+            <input id="current-password" type="password" autocomplete="current-password" required>
+          </label>
+          <label>
+            <span>New password</span>
+            <input id="new-password" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <label>
+            <span>Confirm new password</span>
+            <input id="confirm-password" type="password" autocomplete="new-password" minlength="8" required>
+          </label>
+          <div class="password-actions">
+            <button id="password-save-btn" class="btn btn-primary" type="submit">Save password</button>
+            <button id="password-cancel-btn" class="btn btn-secondary" type="button">Cancel</button>
+          </div>
+          <div id="password-message" class="password-message" role="status"></div>
+        </form>
+        <form id="settings-form" class="password-form settings-form">
+          <div class="settings-divider">Application Defaults</div>
+          <input id="settings-default-profile" type="hidden" value="fast">
+          <div class="settings-fixed-row">
+            <span>Scan profile</span>
+            <strong>Fast optimized</strong>
+          </div>
+          <label>
+            <span>Default workers</span>
+            <select id="settings-default-workers">
+              <option value="1">1 worker</option>
+              <option value="2">2 workers</option>
+              <option value="3">3 workers</option>
+              <option value="4">4 workers</option>
+            </select>
+          </label>
+          <label>
+            <span>Export folder</span>
+            <input id="settings-export-folder" type="text" placeholder="Leave empty to use QR Desk exports">
+          </label>
+          <p class="settings-help">Exports are still available in QR Desk; this folder receives an extra copy for easy access.</p>
+          <div class="password-actions">
+            <button id="settings-save-btn" class="btn btn-primary" type="submit">Save settings</button>
+            <button id="settings-reset-btn" class="btn btn-secondary" type="button">Use defaults</button>
+          </div>
+          <div id="settings-message" class="password-message" role="status"></div>
+        </form>
+      </div>
+    </div>
+    <div id="about-modal" class="admin-modal hidden" aria-hidden="true">
+      <div class="admin-modal-backdrop" data-close-about="true"></div>
+      <div class="admin-modal-dialog about-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
+        <div class="admin-modal-head">
+          <div>
+            <span class="eyebrow modal-eyebrow">About</span>
+            <strong id="about-modal-title">QR Desk</strong>
+          </div>
+          <button id="about-modal-close" class="image-modal-close" type="button" aria-label="Close about window">Close</button>
+        </div>
+        <div class="about-body">
+          <div class="about-logo">QR</div>
+          <div>
+            <h3>QR Desk <span id="about-version">v1.0</span></h3>
+            <p>Desktop QR scanning workspace with tray controls, exports, and local admin settings.</p>
+          </div>
+        </div>
+      </div>
+    </div>    <div id="image-modal" class="image-modal hidden" aria-hidden="true">
+      <div class="image-modal-backdrop" data-close-modal="true"></div>
+      <div class="image-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="image-modal-title">
+        <div class="image-modal-head">
+          <div>
+            <span class="eyebrow modal-eyebrow">Image Viewer</span>
+            <strong id="image-modal-title">Preview</strong>
+          </div>
+          <div class="image-modal-actions">
+            <button id="image-modal-zoom-out" class="image-modal-tool" type="button" aria-label="Zoom out">-</button>
+            <button id="image-modal-zoom-reset" class="image-modal-tool image-modal-zoom-readout" type="button" aria-label="Reset zoom">100%</button>
+            <button id="image-modal-zoom-in" class="image-modal-tool" type="button" aria-label="Zoom in">+</button>
+            <button id="image-modal-close" class="image-modal-close" type="button" aria-label="Close viewer">Close</button>
+          </div>
+        </div>
+        <div id="image-modal-stage" class="image-modal-stage">
+          <img id="image-modal-img" alt="Expanded scan preview">
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.__APP_BOOT__ = __APP_BOOT_DATA__;
+    </script>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
